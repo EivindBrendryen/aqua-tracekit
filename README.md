@@ -37,12 +37,26 @@ Once a trace origin is decided, a traceability index is generated. This forms th
 
 
 ## Installation
+
+**Basic installation:**
 ```bash
 pip install aqua-tracekit
 ```
 
+**To run the examples:**
+```bash
+pip install aqua-tracekit[examples]
+```
+
 ## Quick Start
-Open the example notebooks in a notebook environment like jupyter, binder, google colab or similar.
+
+**Local setup:**
+```bash
+pip install aqua-tracekit[examples]
+jupyter notebook examples/
+```
+
+Or open the example notebooks in any notebook environment (VS Code, JupyterLab, Google Colab, Binder).
 
 ## Documentation
 TODO: Link to docs.
