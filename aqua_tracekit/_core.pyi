@@ -5,7 +5,7 @@ from datetime import datetime
 import polars as pl
 
 class SdtModel:
-    """Main model for aqua-tracekit with populations, transfers, and containers."""
+    """Main model for aqua-tracekit with fishgroup segments, transfers, and containers."""
     
     def __init__(self, base_path: str) -> None:
         """Initialize model with base path for CSV files.
