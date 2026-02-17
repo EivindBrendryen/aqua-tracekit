@@ -1,0 +1,22 @@
+[package]
+name = "aqua-tracekit"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.25", features = ["extension-module", "chrono"] }
+pyo3-polars = "0.24"
+polars = { version = "0.51", default-features = false, features = [
+    "csv", "parquet", "lazy",
+    "dtype-datetime", "dtype-duration",
+    "is_in", "strings"
+] }
+
+petgraph = "0.6"
+uuid = { version = "1", features = ["v4", "serde"] }
+thiserror = "2"
+chrono = "0.4.43"

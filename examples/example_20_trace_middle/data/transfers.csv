@@ -1,0 +1,7 @@
+source_pop_id,dest_pop_id,share_count_forward,share_biomass_forward,share_count_backward,share_biomass_backward,transfer_count,transfer_biomass_kg
+P1,P5,0.9,0.9,1,1
+P1,P4,0.1,0.1,0.4,0.4
+P2,P4,1,1,0.6,0.6
+P3,P7,1,1,0.8,0.8
+P4,P6,0.4,0.4,1,1
+P4,P7,0.6,0.6,0.2,0.2

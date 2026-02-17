@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Rust
+target/
+Cargo.lock
+
+# PyO3/Maturin build artifacts
+*.so
+*.pyd
+*.dll
+
+# OS
+.DS_Store
+Thumbs.db
