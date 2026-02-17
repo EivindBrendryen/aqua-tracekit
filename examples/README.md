@@ -20,7 +20,7 @@ jupyter notebook
 
 ## Example 2: Split Transfers
 
-**Description:** Track fish fishgroup segments through split transfers where one population is divided between multiple destination containers.
+**Description:** Track fish fishgroup segments through split transfers where one segment is divided between multiple destination containers.
 
 - **View:** [nbviewer](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_2_split/example_2_split.ipynb)
 - **Run:** `examples/example_2_split/example_2_split.ipynb`
@@ -41,14 +41,14 @@ jupyter notebook
 
 ## Example 6: Forward Tracing
 
-**Description:** Trace forward from a starting population to see where fish end up across the production chain.
+**Description:** Trace forward from a starting segment to see where fish end up across the production chain.
 
 - **View:** [nbviewer](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_6_trace_forward/example_6_trace_forward.ipynb)
 - **Run:** `examples/example_6_trace_forward/example_6_trace_forward.ipynb`
 
 ## Example 20: Trace from Middle
 
-**Description:** Start tracing from a population in the middle of the production chain - trace both backwards to origins and forwards to destinations.
+**Description:** Start tracing from a segment in the middle of the production chain - trace both backwards to origins and forwards to destinations.
 
 - **View:** [nbviewer](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_20_trace_middle/example_20_trace_middle.ipynb)
 - **Run:** `examples/example_20_trace_middle/example_20_trace_middle.ipynb`

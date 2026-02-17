@@ -50,13 +50,13 @@ fn add_schema_exports(m: &Bound<'_, PyModule>) -> PyResult<()> {
     aggregate_by.add("BIOMASS", schema::aggregate_by::BIOMASS)?;
     m.add_submodule(&aggregate_by)?;
 
-    // Population
-    let population = PyModule::new(m.py(), "population")?;
-    population.add("POPULATION_ID", schema::population::POPULATION_ID)?;
-    population.add("CONTAINER_ID", schema::population::CONTAINER_ID)?;
-    population.add("START_TIME", schema::population::START_TIME)?;
-    population.add("END_TIME", schema::population::END_TIME)?;
-    m.add_submodule(&population)?;
+    // segment
+    let segment = PyModule::new(m.py(), "segment")?;
+    segment.add("SEGMENT_ID", schema::segment::SEGMENT_ID)?;
+    segment.add("CONTAINER_ID", schema::segment::CONTAINER_ID)?;
+    segment.add("START_TIME", schema::segment::START_TIME)?;
+    segment.add("END_TIME", schema::segment::END_TIME)?;
+    m.add_submodule(&segment)?;
 
     // Container
     let container = PyModule::new(m.py(), "container")?;
@@ -66,12 +66,12 @@ fn add_schema_exports(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Traceability
     let traceability = PyModule::new(m.py(), "traceability")?;
     traceability.add(
-        "ORIGIN_POPULATION_ID",
-        schema::traceability::ORIGIN_POPULATION_ID,
+        "ORIGIN_SEGMENT_ID",
+        schema::traceability::ORIGIN_SEGMENT_ID,
     )?;
     traceability.add(
-        "TRACED_POPULATION_ID",
-        schema::traceability::TRACED_POPULATION_ID,
+        "TRACED_SEGMENT_ID",
+        schema::traceability::TRACED_SEGMENT_ID,
     )?;
     traceability.add("TRACE_DIRECTION", schema::traceability::TRACE_DIRECTION)?;
     m.add_submodule(&traceability)?;

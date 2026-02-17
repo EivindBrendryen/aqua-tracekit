@@ -4,7 +4,7 @@
 //
 // Modified to support:
 // - Multi-line x-axis labels (date on line 1, time on line 2)
-// - Interactive population selection with backward/forward tracing
+// - Interactive segment selection with backward/forward tracing
 //
 // Usage (from Rust-injected inline script):
 //   SdtChart.create({ zoom: 1.0, tMin: ..., tMax: ..., ... });
@@ -30,7 +30,7 @@ var SdtChart = (function () {
     var laneHeight = cfg.laneHeight;
     var numLanes = cfg.numLanes;
     var rectPadding = cfg.rectPadding;
-    var populations = cfg.populations;
+    var segments = cfg.segments;
     var transfers_data = cfg.transfers;
     var lanes_data = cfg.lanes;
 
@@ -127,7 +127,7 @@ var SdtChart = (function () {
       var backward = traceBackward(popId);
       var forward = traceForward(popId);
 
-      // Combine both sets, excluding the selected population itself
+      // Combine both sets, excluding the selected segment itself
       var combined = new Set();
       backward.forEach(function (id) { if (id !== popId) combined.add(id); });
       forward.forEach(function (id) { if (id !== popId) combined.add(id); });
@@ -137,7 +137,7 @@ var SdtChart = (function () {
 
     // ── Color selection helper ────────────────────────────────────────
 
-    function getPopulationColors(popId) {
+    function getsegmentColors(popId) {
       if (popId === selectedPopId) {
         return COLORS.selected;
       } else if (tracedPopIds.has(popId)) {
@@ -149,7 +149,7 @@ var SdtChart = (function () {
 
     // ── Selection handlers ────────────────────────────────────────────
 
-    function selectPopulation(popId) {
+    function selectsegment(popId) {
       selectedPopId = popId;
       tracedPopIds = buildTraceSet(popId);
       rebuild();
@@ -255,13 +255,13 @@ var SdtChart = (function () {
         }));
       }
 
-      // ── Population rectangles ──
+      // ── segment rectangles ──
       var laneMap = {};
       for (var i = 0; i < lanes_data.length; i++) laneMap[lanes_data[i].container_id] = i;
 
       var popPositions = {};
-      for (var i = 0; i < populations.length; i++) {
-        var p = populations[i];
+      for (var i = 0; i < segments.length; i++) {
+        var p = segments[i];
         var li = laneMap[p.container_id];
         if (li === undefined) continue;
         var x = marginLeft + timeToX(p.start_us, true);
@@ -273,7 +273,7 @@ var SdtChart = (function () {
         popPositions[p.pop_id] = { x: x, x2: x2, y: ry, h: h, lane: li };
 
         // Get colors based on selection state
-        var colors = getPopulationColors(p.pop_id);
+        var colors = getsegmentColors(p.pop_id);
 
         var rect = svgEl('rect', {
           x: x, y: ry, width: w, height: h, rx: 3,
@@ -293,7 +293,7 @@ var SdtChart = (function () {
         (function (popId) {
           rect.addEventListener('click', function (e) {
             e.stopPropagation();
-            selectPopulation(popId);
+            selectsegment(popId);
           });
         })(p.pop_id);
 
@@ -360,8 +360,8 @@ var SdtChart = (function () {
 
     // ── Selection controls (exposed globally for notebook calls) ──────
 
-    window.sdtSelectPopulation = function (popId) {
-      selectPopulation(popId);
+    window.sdtSelectsegment = function (popId) {
+      selectsegment(popId);
     };
 
     window.sdtClearSelection = function () {

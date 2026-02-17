@@ -19,7 +19,7 @@ struct EdgeFactors {
 /// forward / backward tracing with factor aggregation.
 pub struct DagTracer {
     graph: DiGraph<String, EdgeFactors>,
-    /// Map from population-id string → NodeIndex for fast lookup.
+    /// Map from segment-id string → NodeIndex for fast lookup.
     node_map: HashMap<String, NodeIndex>,
 }
 
@@ -68,10 +68,10 @@ impl DagTracer {
         Ok(Self { graph, node_map })
     }
 
-    /// Trace all reachable populations from a set of origin population ids.
+    /// Trace all reachable segments from a set of origin segment ids.
     ///
     /// Returns a DataFrame with columns:
-    ///   origin_population, traced_population, direction, + 4 factor columns
+    ///   origin_segment, traced_segment, direction, + 4 factor columns
     pub fn trace(&self, origin_ids: &[String]) -> Result<DataFrame, SdtError> {
         let mut origins = Vec::new();
         let mut traced = Vec::new();
@@ -89,8 +89,8 @@ impl DagTracer {
         }
 
         let df = DataFrame::new(vec![
-            Column::new(traceability::ORIGIN_POPULATION_ID.into(), &origins),
-            Column::new(traceability::TRACED_POPULATION_ID.into(), &traced),
+            Column::new(traceability::ORIGIN_SEGMENT_ID.into(), &origins),
+            Column::new(traceability::TRACED_SEGMENT_ID.into(), &traced),
             Column::new(traceability::TRACE_DIRECTION.into(), &directions),
             Column::new(factors::ALL[0].into(), &factor_vecs[0]),
             Column::new(factors::ALL[1].into(), &factor_vecs[1]),

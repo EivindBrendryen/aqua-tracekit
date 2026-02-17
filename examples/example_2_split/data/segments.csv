@@ -1,4 +1,4 @@
-population_id, container_id, population_name, start_time, end_time
+segment_id, container_id, segment_name, start_time, end_time
 P1,C1,FG1,2025-01-01 12:00:00,2025-01-05 12:00:00
 P2,C1,FG1,2025-01-05 12:00:00,2025-01-10 19:00:00
 P3,C2,FG1,2025-01-05 12:00:00,2025-01-10 19:00:00

@@ -48,17 +48,17 @@ class SdtSchema:
         TRANSFER_BIOMASS_KG = _rust.transfer.TRANSFER_BIOMASS_KG
         FACTORS = TraceFactors
 
-    class Population:
-        """Population column names."""
-        POPULATION_ID = _rust.population.POPULATION_ID
-        CONTAINER_ID = _rust.population.CONTAINER_ID
-        START_TIME = _rust.population.START_TIME
-        END_TIME = _rust.population.END_TIME
+    class Segment:
+        """segment column names."""
+        SEGMENT_ID = _rust.segment.SEGMENT_ID
+        CONTAINER_ID = _rust.segment.CONTAINER_ID
+        START_TIME = _rust.segment.START_TIME
+        END_TIME = _rust.segment.END_TIME
 
     class TraceabilityIndex:
         """Traceability index column names."""
-        ORIGIN_POPULATION_ID = _rust.traceability.ORIGIN_POPULATION_ID
-        TRACED_POPULATION_ID = _rust.traceability.TRACED_POPULATION_ID
+        ORIGIN_SEGMENT_ID = _rust.traceability.ORIGIN_SEGMENT_ID
+        TRACED_SEGMENT_ID = _rust.traceability.TRACED_SEGMENT_ID
         TRACE_DIRECTION = _rust.traceability.TRACE_DIRECTION
         FACTORS = TraceFactors
 

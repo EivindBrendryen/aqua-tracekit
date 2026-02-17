@@ -1,4 +1,4 @@
-population_id, date_time, mortality_count
+segment_id, date_time, mortality_count
 P1,2025-01-01 16:00:00, 10
 P1,2025-01-02 16:00:00, 10
 P1,2025-01-03 16:00:00, 10

@@ -62,30 +62,30 @@ class SdtModel:
         """
         ...
     
-    def load_populations(self, filename: Optional[str] = None) -> pl.DataFrame:
-        """Load populations CSV.
+    def load_segments(self, filename: Optional[str] = None) -> pl.DataFrame:
+        """Load segments CSV.
         
-        Required columns: population_id, container_id, start_time, end_time
+        Required columns: segment_id, container_id, start_time, end_time
         Datetime columns are parsed using format "%Y-%m-%d %H:%M:%S"
         
         Args:
-            filename: CSV filename (default: "populations.csv")
+            filename: CSV filename (default: "segments.csv")
             
         Returns:
-            DataFrame with populations
+            DataFrame with segments
         """
         ...
     
-    def load_population_timeseries(self, filename: str) -> pl.DataFrame:
-        """Load population-level timeseries CSV.
+    def load_segment_timeseries(self, filename: str) -> pl.DataFrame:
+        """Load segment-level timeseries CSV.
         
-        Required columns: population_id, date_time
+        Required columns: segment_id, date_time
         
         Args:
             filename: CSV filename
             
         Returns:
-            DataFrame with population timeseries
+            DataFrame with segment timeseries
         """
         ...
     
@@ -150,11 +150,11 @@ class SdtModel:
     
     # ── Tracing methods ──
     
-    def trace_populations(self, origin_df: pl.DataFrame) -> pl.DataFrame:
-        """Trace populations from a DataFrame containing population_id column.
+    def trace_segments(self, origin_df: pl.DataFrame) -> pl.DataFrame:
+        """Trace segments from a DataFrame containing segment_id column.
         
         Args:
-            origin_df: DataFrame with population_id column
+            origin_df: DataFrame with segment_id column
             
         Returns:
             DataFrame with traceability index
@@ -163,30 +163,30 @@ class SdtModel:
     
     # ── Filtering methods ──
     
-    def get_populations_active_at(self, timestamp: datetime) -> pl.DataFrame:
-        """Get populations active at a specific timestamp.
+    def get_segments_active_at(self, timestamp: datetime) -> pl.DataFrame:
+        """Get segments active at a specific timestamp.
         
         Args:
             timestamp: Naive datetime (no timezone info)
             
         Returns:
-            DataFrame with active populations
+            DataFrame with active segments
         """
         ...
     
-    def get_populations_incoming(self) -> pl.DataFrame:
-        """Get populations that have incoming transfers.
+    def get_segments_incoming(self) -> pl.DataFrame:
+        """Get segments that have incoming transfers.
         
-        Returns:
-            DataFrame with populations
+        Returns:    
+            DataFrame with segments
         """
         ...
     
-    def get_populations_outgoing(self) -> pl.DataFrame:
-        """Get populations that have outgoing transfers.
+    def get_segments_outgoing(self) -> pl.DataFrame:
+        """Get segments that have outgoing transfers.
         
         Returns:
-            DataFrame with populations
+            DataFrame with segments
         """
         ...
     
@@ -197,10 +197,10 @@ class SdtModel:
         pop_data: pl.DataFrame,
         traceability_index: pl.DataFrame,
     ) -> pl.DataFrame:
-        """Merge traced population data with time-series or other population-level data.
+        """Merge traced segment data with time-series or other segment-level data.
         
         Args:
-            pop_data: DataFrame with population data
+            pop_data: DataFrame with segment data
             traceability_index: Traceability index DataFrame
             
         Returns:
@@ -208,22 +208,22 @@ class SdtModel:
         """
         ...
     
-    def map_container_data_to_populations(
+    def map_container_data_to_segments(
         self,
         container_data: pl.DataFrame,
         include_unmatched: bool =False, 
         allow_multiple: bool = False,
     ) -> pl.DataFrame:
-        """Map container-level timeseries to populations.
+        """Map container-level timeseries to segments.
         
-        Joins on container_id and filters to each population's active period.
+        Joins on container_id and filters to each segment's active period.
         
         Args:
             container_data: DataFrame with container_id and date_time columns
-            allow_multiple: Whether to allow multiple population matches per input row
+            allow_multiple: Whether to allow multiple segment matches per input row
             
         Returns:
-            DataFrame with container data mapped to populations
+            DataFrame with container data mapped to segments
         """
         ...
     
@@ -240,7 +240,7 @@ class SdtModel:
         Args:
             traced_data: DataFrame with traced data
             aggregations: List of Aggregation objects
-            group_by: Column names to group by (default: ["origin_population_id", "date_time"])
+            group_by: Column names to group by (default: ["origin_segment_id", "date_time"])
             
         Returns:
             Aggregated DataFrame
@@ -286,8 +286,8 @@ class SdtModel:
         ...
     
     @property
-    def populations_df(self) -> Optional[pl.DataFrame]:
-        """Get loaded populations DataFrame."""
+    def segments_df(self) -> Optional[pl.DataFrame]:
+        """Get loaded segments DataFrame."""
         ...
     
     # ── Visualization ──
@@ -295,8 +295,8 @@ class SdtModel:
     def visualize_trace(
         self,
         container_label_col: Optional[str] = None,
-        population_label_col: Optional[str] = None,
-        population_tooltip_cols: Optional[list[str]] = None,
+        segment_label_col: Optional[str] = None,
+        segment_tooltip_cols: Optional[list[str]] = None,
         transfer_tooltip_cols: Optional[list[str]] = None,
         gap_px: int = 32,
         lane_height_px: int = 24,
@@ -309,8 +309,8 @@ class SdtModel:
         
         Args:
             container_label_col: Column from containers df for y-axis labels (default: "container_id")
-            population_label_col: Column from populations df to display on rectangles (default: "population_id")
-            population_tooltip_cols: Columns from populations df to show on hover (default: [])
+            segment_label_col: Column from segments df to display on rectangles (default: "segment_id")
+            segment_tooltip_cols: Columns from segments df to show on hover (default: [])
             transfer_tooltip_cols: Columns from transfers df to show on transfer hover
                                    (default: ["transfer_count", "transfer_biomass_kg"])
             gap_px: Pixel width of gap inserted at each transfer time (default: 32)
@@ -500,9 +500,9 @@ class direction:
     FORWARD: str
     BACKWARD: str
 
-class population:
-    """Population column name constants."""
-    POPULATION_ID: str
+class segment:
+    """segment column name constants."""
+    SEGMENT_ID: str
     CONTAINER_ID: str
     START_TIME: str
     END_TIME: str
@@ -513,8 +513,8 @@ class container:
 
 class traceability:
     """Traceability index column name constants."""
-    ORIGIN_POPULATION_ID: str
-    TRACED_POPULATION_ID: str
+    ORIGIN_SEGMENT_ID: str
+    TRACED_SEGMENT_ID: str
     TRACE_DIRECTION: str
 
 class timeseries:

@@ -23,7 +23,7 @@ pub struct SdtModel {
     base_path: PathBuf,
     transfers: Option<DataFrame>,
     containers: Option<DataFrame>,
-    populations: Option<DataFrame>,
+    segments: Option<DataFrame>,
     tracer: Option<DagTracer>,
 }
 
@@ -35,7 +35,7 @@ impl SdtModel {
             base_path: PathBuf::from(base_path),
             transfers: None,
             containers: None,
-            populations: None,
+            segments: None,
             tracer: None,
         }
     }
@@ -57,7 +57,7 @@ impl SdtModel {
     /// Load transfers CSV.
     ///
     /// Minimum required columns:
-    /// population columns (required)
+    /// segment columns (required)
     ///     source_pop_id, dest_pop_id
     /// stock columns (required if factor columns are missing):
     ///     transfer_count, transfer_biomass_kg
@@ -213,42 +213,42 @@ impl SdtModel {
         Ok(PyDataFrame(raw))
     }
 
-    /// Load populations CSV.
+    /// Load segments CSV.
     ///
-    /// Required columns: population_id, container_id, start_time, end_time
+    /// Required columns: segment_id, container_id, start_time, end_time
     /// start_time and end_time are parsed as datetime (%Y-%m-%d %H:%M:%S).
     /// All user columns are preserved (as strings).
     #[pyo3(signature = (filename=None))]
-    fn load_populations(&mut self, filename: Option<&str>) -> PyResult<PyDataFrame> {
-        let fname = filename.unwrap_or("populations.csv");
+    fn load_segments(&mut self, filename: Option<&str>) -> PyResult<PyDataFrame> {
+        let fname = filename.unwrap_or("segments.csv");
         let raw = self.read_csv_as_strings(fname, None)?;
 
         Self::require_columns(
             &raw,
             &[
-                population::POPULATION_ID,
-                population::CONTAINER_ID,
-                population::START_TIME,
-                population::END_TIME,
+                segment::SEGMENT_ID,
+                segment::CONTAINER_ID,
+                segment::START_TIME,
+                segment::END_TIME,
             ],
         )?;
 
         // Parse datetime columns
-        let df = Self::parse_datetime_column(raw, population::START_TIME, "%Y-%m-%d %H:%M:%S")?;
-        let df = Self::parse_datetime_column(df, population::END_TIME, "%Y-%m-%d %H:%M:%S")?;
+        let df = Self::parse_datetime_column(raw, segment::START_TIME, "%Y-%m-%d %H:%M:%S")?;
+        let df = Self::parse_datetime_column(df, segment::END_TIME, "%Y-%m-%d %H:%M:%S")?;
 
-        self.populations = Some(df.clone());
+        self.segments = Some(df.clone());
         Ok(PyDataFrame(df))
     }
 
-    /// Load a population-level timeseries CSV.
+    /// Load a segment-level timeseries CSV.
     ///
-    /// Required columns: population_id, date_time, + any value columns.
+    /// Required columns: segment_id, date_time, + any value columns.
     /// All columns loaded as strings — use parse helpers before passing
     /// to aggregation methods.
-    fn load_population_timeseries(&self, filename: &str) -> PyResult<PyDataFrame> {
+    fn load_segment_timeseries(&self, filename: &str) -> PyResult<PyDataFrame> {
         let df = self.read_csv_as_strings(filename, None)?;
-        Self::require_columns(&df, &[population::POPULATION_ID, timeseries::DATE_TIME])?;
+        Self::require_columns(&df, &[segment::SEGMENT_ID, timeseries::DATE_TIME])?;
         let df = Self::parse_datetime_column(df, timeseries::DATE_TIME, "%Y-%m-%d %H:%M:%S")?;
 
         Ok(PyDataFrame(df))
@@ -307,12 +307,12 @@ impl SdtModel {
 
     // ── Tracing ─────────────────────────────────────────────────────────────
 
-    /// Trace populations from a DataFrame containing a `population_id` column.
-    fn trace_populations(&mut self, origin_df: PyDataFrame) -> PyResult<PyDataFrame> {
+    /// Trace segments from a DataFrame containing a `segment_id` column.
+    fn trace_segments(&mut self, origin_df: PyDataFrame) -> PyResult<PyDataFrame> {
         let tracer = self.get_or_build_tracer().map_err(SdtError::from)?;
         let ids: Vec<String> = origin_df
             .0
-            .column(population::POPULATION_ID)
+            .column(segment::SEGMENT_ID)
             .map_err(SdtError::from)?
             .str()
             .map_err(SdtError::from)?
@@ -326,7 +326,7 @@ impl SdtModel {
 
     // ── Filtering ───────────────────────────────────────────────────────────
 
-    fn get_populations_active_at(&self, timestamp: Bound<PyDateTime>) -> PyResult<PyDataFrame> {
+    fn get_segments_active_at(&self, timestamp: Bound<PyDateTime>) -> PyResult<PyDataFrame> {
         // Reject timezone-aware datetimes
         if !timestamp.getattr("tzinfo")?.is_none() {
             return Err(PyValueError::new_err(
@@ -339,19 +339,19 @@ impl SdtModel {
         let timestamp_us = dt.and_utc().timestamp_micros();
 
         let pops = self
-            .populations
+            .segments
             .as_ref()
-            .ok_or_else(|| SdtError::NotLoaded("populations".into()))
+            .ok_or_else(|| SdtError::NotLoaded("segments".into()))
             .map_err(SdtError::from)?;
 
         let df = pops
             .clone()
             .lazy()
             .filter(
-                col(population::START_TIME).lt_eq(lit(timestamp_us)).and(
-                    col(population::END_TIME)
+                col(segment::START_TIME).lt_eq(lit(timestamp_us)).and(
+                    col(segment::END_TIME)
                         .gt(lit(timestamp_us))
-                        .or(col(population::END_TIME).is_null()),
+                        .or(col(segment::END_TIME).is_null()),
                 ),
             )
             .collect()
@@ -360,11 +360,11 @@ impl SdtModel {
         Ok(PyDataFrame(df))
     }
 
-    fn get_populations_incoming(&self) -> PyResult<PyDataFrame> {
+    fn get_segments_incoming(&self) -> PyResult<PyDataFrame> {
         let pops = self
-            .populations
+            .segments
             .as_ref()
-            .ok_or(SdtError::NotLoaded("populations".into()))
+            .ok_or(SdtError::NotLoaded("segments".into()))
             .map_err(SdtError::from)?;
         let transfers = self
             .transfers
@@ -382,7 +382,7 @@ impl SdtModel {
             .clone()
             .lazy()
             .filter(
-                col(population::POPULATION_ID)
+                col(segment::SEGMENT_ID)
                     .is_in(lit(dest_pops), false)
                     .not(),
             )
@@ -392,11 +392,11 @@ impl SdtModel {
         Ok(PyDataFrame(df))
     }
 
-    fn get_populations_outgoing(&self) -> PyResult<PyDataFrame> {
+    fn get_segments_outgoing(&self) -> PyResult<PyDataFrame> {
         let pops = self
-            .populations
+            .segments
             .as_ref()
-            .ok_or(SdtError::NotLoaded("populations".into()))
+            .ok_or(SdtError::NotLoaded("segments".into()))
             .map_err(SdtError::from)?;
         let transfers = self
             .transfers
@@ -414,7 +414,7 @@ impl SdtModel {
             .clone()
             .lazy()
             .filter(
-                col(population::POPULATION_ID)
+                col(segment::SEGMENT_ID)
                     .is_in(lit(source_pops), false)
                     .not(),
             )
@@ -426,7 +426,7 @@ impl SdtModel {
 
     // ── Data |ing ────────────────────────────────────────────────────────
 
-    /// Merge traced population data with time-series or other population-level data.
+    /// Merge traced segment data with time-series or other segment-level data.
     #[staticmethod]
     fn add_data_to_trace(
         pop_data: PyDataFrame,
@@ -437,8 +437,8 @@ impl SdtModel {
             .lazy()
             .join(
                 pop_data.0.lazy(),
-                [col(traceability::TRACED_POPULATION_ID)],
-                [col(population::POPULATION_ID)],
+                [col(traceability::TRACED_SEGMENT_ID)],
+                [col(segment::SEGMENT_ID)],
                 JoinArgs::new(JoinType::Left),
             )
             .collect()
@@ -447,26 +447,26 @@ impl SdtModel {
         Ok(PyDataFrame(df))
     }
 
-    /// Map container-level timeseries to populations.
-    /// Joins on container_id and filters to each population's active period.
+    /// Map container-level timeseries to segments.
+    /// Joins on container_id and filters to each segment's active period.
     ///
     /// A row matches if:
-    ///   population.container_id == container_data.container_id
-    ///   AND population.start_time <= date_time < population.end_time
+    ///   segment.container_id == container_data.container_id
+    ///   AND segment.start_time <= date_time < segment.end_time
     ///   (null end_time means still active)
     ///
     /// The date_time column must be parsed to Datetime before calling this method.
     #[pyo3(signature = (container_data, include_unmatched=true, allow_multiple=true))]
-    fn map_container_data_to_populations(
+    fn map_container_data_to_segments(
         &self,
         container_data: PyDataFrame,
         include_unmatched: bool,
         allow_multiple: bool,
     ) -> PyResult<PyDataFrame> {
         let pops = self
-            .populations
+            .segments
             .as_ref()
-            .ok_or(SdtError::NotLoaded("populations".into()))
+            .ok_or(SdtError::NotLoaded("segments".into()))
             .map_err(SdtError::from)?;
 
         let input_cols: Vec<String> = container_data
@@ -484,7 +484,7 @@ impl SdtModel {
         };
 
         let mut output_cols: Vec<Expr> = input_cols.iter().map(|c| col(c)).collect();
-        output_cols.push(col(population::POPULATION_ID));
+        output_cols.push(col(segment::SEGMENT_ID));
 
         let matched = container_data
             .0
@@ -492,21 +492,21 @@ impl SdtModel {
             .join(
                 pops.clone().lazy(),
                 [col(container::CONTAINER_ID)],
-                [col(population::CONTAINER_ID)],
+                [col(segment::CONTAINER_ID)],
                 JoinArgs::new(join_type),
             )
             .filter(
                 // start_time <= date_time
-                col(population::START_TIME)
+                col(segment::START_TIME)
                     .lt_eq(col(timeseries::DATE_TIME))
                     .and(
                         // date_time < end_time OR end_time is null (still active)
-                        col(population::END_TIME)
+                        col(segment::END_TIME)
                             .is_null()
-                            .or(col(timeseries::DATE_TIME).lt(col(population::END_TIME))),
+                            .or(col(timeseries::DATE_TIME).lt(col(segment::END_TIME))),
                     )
-                    // Also keep unmatched rows (where population columns are null)
-                    .or(col(population::POPULATION_ID).is_null()),
+                    // Also keep unmatched rows (where segment columns are null)
+                    .or(col(segment::SEGMENT_ID).is_null()),
             )
             .select(output_cols)
             .collect()
@@ -517,16 +517,16 @@ impl SdtModel {
             let counts = matched
                 .clone()
                 .lazy()
-                .filter(col(population::POPULATION_ID).is_not_null())
+                .filter(col(segment::SEGMENT_ID).is_not_null())
                 .group_by(input_cols.iter().map(|c| col(c)).collect::<Vec<_>>())
-                .agg([col(population::POPULATION_ID).count().alias("_match_count")])
+                .agg([col(segment::SEGMENT_ID).count().alias("_match_count")])
                 .filter(col("_match_count").gt(lit(1)))
                 .collect()
                 .map_err(SdtError::from)?;
 
             if counts.height() > 0 {
                 return Err(SdtError::Validation(format!(
-                    "{} rows matched multiple populations while allow_multiple=false",
+                    "{} rows matched multiple segments while allow_multiple=false",
                     counts.height()
                 ))
                 .into());
@@ -553,7 +553,7 @@ impl SdtModel {
 
         let group_cols = group_by.unwrap_or_else(|| {
             vec![
-                traceability::ORIGIN_POPULATION_ID.to_string(),
+                traceability::ORIGIN_SEGMENT_ID.to_string(),
                 timeseries::DATE_TIME.to_string(),
             ]
         });
@@ -663,8 +663,8 @@ impl SdtModel {
     }
 
     #[getter]
-    fn populations_df(&self) -> PyResult<Option<PyDataFrame>> {
-        Ok(self.populations.clone().map(PyDataFrame))
+    fn segments_df(&self) -> PyResult<Option<PyDataFrame>> {
+        Ok(self.segments.clone().map(PyDataFrame))
     }
 
     // ── Visualization ───────────────────────────────────────────────────
@@ -677,9 +677,9 @@ impl SdtModel {
     /// Args:
     ///     container_label_col: Column from containers df for y-axis labels
     ///                         (default: "container_id")
-    ///     population_label_col: Column from populations df to display on rectangles
-    ///                          (default: "population_id")
-    ///     population_tooltip_cols: Columns from populations df to show on hover
+    ///     segment_label_col: Column from segments df to display on rectangles
+    ///                          (default: "segment_id")
+    ///     segment_tooltip_cols: Columns from segments df to show on hover
     ///                             (default: [])
     ///     transfer_tooltip_cols: Columns from transfers df to show on transfer hover
     ///                           (default: ["transfer_count", "transfer_biomass_kg"])
@@ -688,8 +688,8 @@ impl SdtModel {
     ///     initial_zoom: Initial zoom level (default: 1.0)
     #[pyo3(signature = (
     container_label_col = None,
-    population_label_col = None,
-    population_tooltip_cols = None,
+    segment_label_col = None,
+    segment_tooltip_cols = None,
     transfer_tooltip_cols = None,
     gap_px = 32,
     lane_height_px = 24,
@@ -698,17 +698,17 @@ impl SdtModel {
     fn visualize_trace(
         &self,
         container_label_col: Option<&str>,
-        population_label_col: Option<&str>,
-        population_tooltip_cols: Option<Vec<String>>,
+        segment_label_col: Option<&str>,
+        segment_tooltip_cols: Option<Vec<String>>,
         transfer_tooltip_cols: Option<Vec<String>>,
         gap_px: u32,
         lane_height_px: u32,
         initial_zoom: f64,
     ) -> PyResult<String> {
-        let populations = self
-            .populations
+        let segments = self
+            .segments
             .as_ref()
-            .ok_or_else(|| SdtError::NotLoaded("populations".into()))?;
+            .ok_or_else(|| SdtError::NotLoaded("segments".into()))?;
         let containers = self
             .containers
             .as_ref()
@@ -722,10 +722,10 @@ impl SdtModel {
             container_label_col: container_label_col
                 .map(|s| s.to_string())
                 .or_else(|| Some(container::CONTAINER_ID.to_string())),
-            population_label_col: population_label_col
+            segment_label_col: segment_label_col
                 .map(|s| s.to_string())
-                .or_else(|| Some(population::POPULATION_ID.to_string())),
-            population_tooltip_cols: population_tooltip_cols.unwrap_or_default(),
+                .or_else(|| Some(segment::SEGMENT_ID.to_string())),
+            segment_tooltip_cols: segment_tooltip_cols.unwrap_or_default(),
             transfer_tooltip_cols: transfer_tooltip_cols.unwrap_or_else(|| {
                 vec![
                     transfer::TRANSFER_COUNT.to_string(),
@@ -737,7 +737,7 @@ impl SdtModel {
             initial_zoom,
         };
 
-        visualization::generate_trace_html(populations, containers, transfers, &config)
+        visualization::generate_trace_html(segments, containers, transfers, &config)
             .map_err(|e| e.into())
     }
 }

@@ -1,8 +1,8 @@
 /// Visualization module: Gantt-style trace chart with non-linear time axis.
 ///
 /// Produces a self-contained HTML string with inline JS that handles:
-/// - Rectangles per population (positioned by container lane + time span)
-/// - Arrows between populations indicating transfers
+/// - Rectangles per segment (positioned by container lane + time span)
+/// - Arrows between segments indicating transfers
 /// - Non-linear time axis that inserts fixed-pixel gaps at transfer times
 /// - Zoom, pan, scrolling, and tooltips
 ///
@@ -27,10 +27,10 @@ const CHART_JS: &str = include_str!("sdt_chart.js");
 pub struct VisualizationConfig {
     /// Column from containers df to use as y-axis label (default: container_id)
     pub container_label_col: Option<String>,
-    /// Column from populations df to display on the rectangle
-    pub population_label_col: Option<String>,
-    /// Columns from populations df to show in tooltip on hover
-    pub population_tooltip_cols: Vec<String>,
+    /// Column from segments df to display on the rectangle
+    pub segment_label_col: Option<String>,
+    /// Columns from segments df to show in tooltip on hover
+    pub segment_tooltip_cols: Vec<String>,
     /// Columns from transfers df to show in tooltip on transfer arrow hover
     pub transfer_tooltip_cols: Vec<String>,
     /// Fixed pixel width inserted at each unique transfer time
@@ -43,7 +43,7 @@ pub struct VisualizationConfig {
 
 // ── Intermediate data structures ────────────────────────────────────────────
 
-struct PopulationRect {
+struct SegmentRect {
     pop_id: String,
     container_id: String,
     start_us: i64,
@@ -66,30 +66,30 @@ struct ContainerLane {
 
 // ── Data extraction ─────────────────────────────────────────────────────────
 
-fn extract_populations(
-    populations: &DataFrame,
+fn extract_segments(
+    segments: &DataFrame,
     config: &VisualizationConfig,
-) -> Result<Vec<PopulationRect>, SdtError> {
-    let n = populations.height();
-    let pop_ids = populations.column(population::POPULATION_ID)?.str()?;
-    let container_ids = populations.column(population::CONTAINER_ID)?.str()?;
-    let start_times = populations
-        .column(population::START_TIME)?
+) -> Result<Vec<SegmentRect>, SdtError> {
+    let n = segments.height();
+    let pop_ids = segments.column(segment::SEGMENT_ID)?.str()?;
+    let container_ids = segments.column(segment::CONTAINER_ID)?.str()?;
+    let start_times = segments
+        .column(segment::START_TIME)?
         .as_materialized_series();
-    let end_times = populations
-        .column(population::END_TIME)?
+    let end_times = segments
+        .column(segment::END_TIME)?
         .as_materialized_series();
 
     let label_col = config
-        .population_label_col
+        .segment_label_col
         .as_deref()
-        .and_then(|c| populations.column(c).ok());
+        .and_then(|c| segments.column(c).ok());
 
     let tooltip_cols: Vec<(&str, &Series)> = config
-        .population_tooltip_cols
+        .segment_tooltip_cols
         .iter()
         .filter_map(|c| {
-            populations
+            segments
                 .column(c.as_str())
                 .ok()
                 .map(|col| (c.as_str(), col.as_materialized_series()))
@@ -132,7 +132,7 @@ fn extract_populations(
             })
             .collect();
 
-        rects.push(PopulationRect {
+        rects.push(SegmentRect {
             pop_id,
             container_id,
             start_us,
@@ -146,25 +146,25 @@ fn extract_populations(
 
 fn extract_transfers(
     transfers: &DataFrame,
-    populations: &DataFrame,
+    segments: &DataFrame,
     config: &VisualizationConfig,
 ) -> Result<Vec<TransferArrow>, SdtError> {
     let n = transfers.height();
     let source_ids = transfers.column(transfer::SOURCE_POP_ID)?.str()?;
     let dest_ids = transfers.column(transfer::DEST_POP_ID)?.str()?;
 
-    // Build pop_id -> end_time / start_time lookup from populations
-    let pop_ids = populations.column(population::POPULATION_ID)?.str()?;
-    let end_times = populations
-        .column(population::END_TIME)?
+    // Build pop_id -> end_time / start_time lookup from segments
+    let pop_ids = segments.column(segment::SEGMENT_ID)?.str()?;
+    let end_times = segments
+        .column(segment::END_TIME)?
         .as_materialized_series();
-    let start_times = populations
-        .column(population::START_TIME)?
+    let start_times = segments
+        .column(segment::START_TIME)?
         .as_materialized_series();
 
     let mut pop_end_time: HashMap<String, i64> = HashMap::new();
     let mut pop_start_time: HashMap<String, i64> = HashMap::new();
-    for i in 0..populations.height() {
+    for i in 0..segments.height() {
         if let Some(pid) = pop_ids.get(i) {
             if let Ok(AnyValue::Datetime(et, _, _)) = end_times.get(i) {
                 pop_end_time.insert(pid.to_string(), et);
@@ -223,10 +223,10 @@ fn extract_transfers(
 
 fn extract_container_lanes(
     containers: &DataFrame,
-    populations: &[PopulationRect],
+    segments: &[SegmentRect],
     config: &VisualizationConfig,
 ) -> Result<Vec<ContainerLane>, SdtError> {
-    let active_ids: BTreeSet<&str> = populations.iter().map(|p| p.container_id.as_str()).collect();
+    let active_ids: BTreeSet<&str> = segments.iter().map(|p| p.container_id.as_str()).collect();
 
     let cid_col = containers.column(container::CONTAINER_ID)?.str()?;
     let label_col = config
@@ -276,18 +276,18 @@ fn collect_transfer_times(arrows: &[TransferArrow]) -> Vec<i64> {
 /// Extracts data from the DataFrames, serializes to JSON, and emits an HTML
 /// shell with embedded JS that handles all SVG rendering client-side.
 pub fn generate_trace_html(
-    populations: &DataFrame,
+    segments: &DataFrame,
     containers: &DataFrame,
     transfers: &DataFrame,
     config: &VisualizationConfig,
 ) -> Result<String, SdtError> {
     // ── Extract data ────────────────────────────────────────────────────
-    let rects = extract_populations(populations, config)?;
-    let arrows = extract_transfers(transfers, populations, config)?;
+    let rects = extract_segments(segments, config)?;
+    let arrows = extract_transfers(transfers, segments, config)?;
     let lanes = extract_container_lanes(containers, &rects, config)?;
 
     if rects.is_empty() {
-        return Ok("<div>No populations to visualize.</div>".to_string());
+        return Ok("<div>No segments to visualize.</div>".to_string());
     }
 
     // ── Layout parameters (passed to JS) ────────────────────────────────
@@ -340,7 +340,7 @@ SdtChart.create({{
   marginRight: 40, marginBottom: 20,
   laneHeight: {lane_height}, numLanes: {num_lanes},
   rectPadding: 4,
-  populations: {populations_json},
+  segments: {segments_json},
   transfers: {transfers_json},
   lanes: {lanes_json}
 }});
@@ -353,7 +353,7 @@ SdtChart.create({{
         transfer_times_json = to_json_array_i64(&transfer_times),
         lane_height = config.lane_height_px,
         num_lanes = lanes.len(),
-        populations_json = populations_to_json(&rects),
+        segments_json = segments_to_json(&rects),
         transfers_json = transfers_to_json(&arrows),
         lanes_json = lanes_to_json(&lanes),
         time_axis_js = TIME_AXIS_JS,
@@ -377,7 +377,7 @@ fn to_json_array_i64(vals: &[i64]) -> String {
     s
 }
 
-fn populations_to_json(rects: &[PopulationRect]) -> String {
+fn segments_to_json(rects: &[SegmentRect]) -> String {
     let mut s = String::from("[");
     for (i, r) in rects.iter().enumerate() {
         if i > 0 {

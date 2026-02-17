@@ -37,9 +37,9 @@ pub mod aggregate_by {
     pub const BIOMASS: &str = "biomass";
 }
 
-// ── Population columns ──────────────────────────────────────────────────────
-pub mod population {
-    pub const POPULATION_ID: &str = "population_id";
+// ── segment columns ──────────────────────────────────────────────────────
+pub mod segment {
+    pub const SEGMENT_ID: &str = "segment_id";
     pub const CONTAINER_ID: &str = "container_id";
     pub const START_TIME: &str = "start_time";
     pub const END_TIME: &str = "end_time";
@@ -52,8 +52,8 @@ pub mod container {
 
 // ── Traceability index columns ──────────────────────────────────────────────
 pub mod traceability {
-    pub const ORIGIN_POPULATION_ID: &str = "origin_population_id";
-    pub const TRACED_POPULATION_ID: &str = "traced_population_id";
+    pub const ORIGIN_SEGMENT_ID: &str = "origin_segment_id";
+    pub const TRACED_SEGMENT_ID: &str = "traced_segment_id";
     pub const TRACE_DIRECTION: &str = "direction";
 }
 
