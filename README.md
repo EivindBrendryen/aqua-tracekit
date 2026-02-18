@@ -60,7 +60,7 @@ Or open the example notebooks in any notebook environment (VS Code, JupyterLab, 
 
 ## Development Setup
 
-If you want to work with the source code, here is [a local development setup guide](./development_setup.md).
+If you want to work with the source code, here is [a local development setup guide](docs/DEVELOPMENT.md).
 
 
 ## Documentation
