@@ -45,7 +45,7 @@ The model's core entities are:
 
 - **Fishgroup segments** — a group of fish in a container over a time period
 - **Containers** — cages, tanks, wellboats, waiting cages, etc.
-- **Transfers** — splits, mixes, and moves between containers
+- **Transfers** — splits, mixes, and moves between segments
 - **Timeseries** — sensor readings, events (vaccination, stocking, harvest), linked to containers or segments
 
 Dimensional data can be freely attached to these entities, and they will follow the data frames through the processing, ready to be used in the analysis once data is traced according to the requirements of the use-case. Examples: 
