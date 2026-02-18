@@ -58,6 +58,11 @@ jupyter notebook examples/
 
 Or open the example notebooks in any notebook environment (VS Code, JupyterLab, Google Colab, Binder).
 
+## Development Setup
+
+If you want to work with the source code, here is [a local development setup guide](./development_setup.md).
+
+
 ## Documentation
 TODO: Link to docs.
 See the [examples](./examples) folder for Jupyter notebooks demonstrating usage.
