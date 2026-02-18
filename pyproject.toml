@@ -8,6 +8,7 @@ dynamic = ["version"]
 requires-python = ">=3.10"
 dependencies = ["polars>=1.38,<2.0"]
 license = {text = "MIT"}
+readme = "README.md"
 
 [project.optional-dependencies]
 examples = ["matplotlib>=3.10", "ipykernel>=7.0", "pandas>=2.0", "pyarrow>=14.0"]
