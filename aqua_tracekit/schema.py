@@ -42,8 +42,8 @@ class SdtSchema:
 
     class Transfer:
         """Transfer/movement column names."""
-        SOURCE_POP_ID = _rust.transfer.SOURCE_POP_ID
-        DEST_POP_ID = _rust.transfer.DEST_POP_ID
+        SOURCE_SEGMENT_ID = _rust.transfer.SOURCE_SEGMENT_ID
+        DEST_SEGMENT_ID = _rust.transfer.DEST_SEGMENT_ID
         TRANSFER_COUNT = _rust.transfer.TRANSFER_COUNT
         TRANSFER_BIOMASS_KG = _rust.transfer.TRANSFER_BIOMASS_KG
         FACTORS = TraceFactors

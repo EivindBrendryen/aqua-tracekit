@@ -14,8 +14,8 @@ mod visualization;
 fn add_schema_exports(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Transfer
     let transfer = PyModule::new(m.py(), "transfer")?;
-    transfer.add("SOURCE_POP_ID", schema::transfer::SOURCE_POP_ID)?;
-    transfer.add("DEST_POP_ID", schema::transfer::DEST_POP_ID)?;
+    transfer.add("SOURCE_SEGMENT_ID", schema::transfer::SOURCE_SEGMENT_ID)?;
+    transfer.add("DEST_SEGMENT_ID", schema::transfer::DEST_SEGMENT_ID)?;
     transfer.add("TRANSFER_COUNT", schema::transfer::TRANSFER_COUNT)?;
     transfer.add("TRANSFER_BIOMASS_KG", schema::transfer::TRANSFER_BIOMASS_KG)?;
     m.add_submodule(&transfer)?;

@@ -44,7 +44,7 @@ pub struct VisualizationConfig {
 // ── Intermediate data structures ────────────────────────────────────────────
 
 struct SegmentRect {
-    pop_id: String,
+    segment_id: String,
     container_id: String,
     start_us: i64,
     end_us: i64,
@@ -53,8 +53,8 @@ struct SegmentRect {
 }
 
 struct TransferArrow {
-    source_pop_id: String,
-    dest_pop_id: String,
+    source_segment_id: String,
+    dest_segment_id: String,
     transfer_time_us: i64,
     tooltip_fields: Vec<(String, String)>,
 }
@@ -71,7 +71,7 @@ fn extract_segments(
     config: &VisualizationConfig,
 ) -> Result<Vec<SegmentRect>, SdtError> {
     let n = segments.height();
-    let pop_ids = segments.column(segment::SEGMENT_ID)?.str()?;
+    let segment_ids = segments.column(segment::SEGMENT_ID)?.str()?;
     let container_ids = segments.column(segment::CONTAINER_ID)?.str()?;
     let start_times = segments
         .column(segment::START_TIME)?
@@ -98,7 +98,7 @@ fn extract_segments(
 
     let mut rects = Vec::with_capacity(n);
     for i in 0..n {
-        let pop_id = pop_ids.get(i).unwrap_or("").to_string();
+        let segment_id = segment_ids.get(i).unwrap_or("").to_string();
         let container_id = container_ids.get(i).unwrap_or("").to_string();
         let start_us = match start_times.get(i) {
             Ok(AnyValue::Datetime(us, _, _)) => us,
@@ -133,7 +133,7 @@ fn extract_segments(
             .collect();
 
         rects.push(SegmentRect {
-            pop_id,
+            segment_id,
             container_id,
             start_us,
             end_us,
@@ -150,11 +150,11 @@ fn extract_transfers(
     config: &VisualizationConfig,
 ) -> Result<Vec<TransferArrow>, SdtError> {
     let n = transfers.height();
-    let source_ids = transfers.column(transfer::SOURCE_POP_ID)?.str()?;
-    let dest_ids = transfers.column(transfer::DEST_POP_ID)?.str()?;
+    let source_ids = transfers.column(transfer::SOURCE_SEGMENT_ID)?.str()?;
+    let dest_ids = transfers.column(transfer::DEST_SEGMENT_ID)?.str()?;
 
-    // Build pop_id -> end_time / start_time lookup from segments
-    let pop_ids = segments.column(segment::SEGMENT_ID)?.str()?;
+    // Build segment_id -> end_time / start_time lookup from segments
+    let segment_ids = segments.column(segment::SEGMENT_ID)?.str()?;
     let end_times = segments
         .column(segment::END_TIME)?
         .as_materialized_series();
@@ -162,15 +162,15 @@ fn extract_transfers(
         .column(segment::START_TIME)?
         .as_materialized_series();
 
-    let mut pop_end_time: HashMap<String, i64> = HashMap::new();
-    let mut pop_start_time: HashMap<String, i64> = HashMap::new();
+    let mut segment_end_time: HashMap<String, i64> = HashMap::new();
+    let mut segment_start_time: HashMap<String, i64> = HashMap::new();
     for i in 0..segments.height() {
-        if let Some(pid) = pop_ids.get(i) {
+        if let Some(pid) = segment_ids.get(i) {
             if let Ok(AnyValue::Datetime(et, _, _)) = end_times.get(i) {
-                pop_end_time.insert(pid.to_string(), et);
+                segment_end_time.insert(pid.to_string(), et);
             }
             if let Ok(AnyValue::Datetime(st, _, _)) = start_times.get(i) {
-                pop_start_time.insert(pid.to_string(), st);
+                segment_start_time.insert(pid.to_string(), st);
             }
         }
     }
@@ -191,10 +191,10 @@ fn extract_transfers(
         let src = source_ids.get(i).unwrap_or("").to_string();
         let dst = dest_ids.get(i).unwrap_or("").to_string();
 
-        // Transfer time = source pop end_time, fallback to dest pop start_time
-        let transfer_time_us = pop_end_time
+        // Transfer time = source segment end_time, fallback to dest segment start_time
+        let transfer_time_us = segment_end_time
             .get(&src)
-            .or_else(|| pop_start_time.get(&dst))
+            .or_else(|| segment_start_time.get(&dst))
             .copied()
             .unwrap_or(0);
 
@@ -212,8 +212,8 @@ fn extract_transfers(
             .collect();
 
         arrows.push(TransferArrow {
-            source_pop_id: src,
-            dest_pop_id: dst,
+            source_segment_id: src,
+            dest_segment_id: dst,
             transfer_time_us,
             tooltip_fields,
         });
@@ -315,9 +315,9 @@ pub fn generate_trace_html(
       <style>
         .lane-label {{ font-family: sans-serif; font-size: 12px; fill: #495057; text-anchor: end; }}
         .time-label {{ font-family: sans-serif; font-size: 10px; fill: #868e96; text-anchor: middle; }}
-        .pop-rect {{ fill: #4dabf7; stroke: #339af0; stroke-width: 1; cursor: pointer; }}
-        .pop-rect:hover {{ fill: #339af0; stroke: #228be6; stroke-width: 2; }}
-        .pop-label {{ font-family: sans-serif; font-size: 10px; fill: #fff; pointer-events: none; }}
+        .segment-rect {{ fill: #4dabf7; stroke: #339af0; stroke-width: 1; cursor: pointer; }}
+        .segment-rect:hover {{ fill: #339af0; stroke: #228be6; stroke-width: 2; }}
+        .segment-label {{ font-family: sans-serif; font-size: 10px; fill: #fff; pointer-events: none; }}
         .transfer-arrow {{ cursor: pointer; }}
         .transfer-arrow:hover {{ stroke: #c0392b; stroke-width: 2.5; }}
       </style>
@@ -391,8 +391,8 @@ fn segments_to_json(rects: &[SegmentRect]) -> String {
             .join("\n");
         write!(
             s,
-            r##"{{"pop_id":"{}","container_id":"{}","start_us":{},"end_us":{},"label":{},"tooltip":{}}}"##,
-            escape_json(&r.pop_id),
+            r##"{{"segment_id":"{}","container_id":"{}","start_us":{},"end_us":{},"label":{},"tooltip":{}}}"##,
+            escape_json(&r.segment_id),
             escape_json(&r.container_id),
             r.start_us,
             r.end_us,
@@ -426,9 +426,9 @@ fn transfers_to_json(arrows: &[TransferArrow]) -> String {
             .join("\n");
         write!(
             s,
-            r##"{{"source_pop_id":"{}","dest_pop_id":"{}","transfer_time_us":{},"tooltip":{}}}"##,
-            escape_json(&a.source_pop_id),
-            escape_json(&a.dest_pop_id),
+            r##"{{"source_segment_id":"{}","dest_segment_id":"{}","transfer_time_us":{},"tooltip":{}}}"##,
+            escape_json(&a.source_segment_id),
+            escape_json(&a.dest_segment_id),
             a.transfer_time_us,
             if tooltip.is_empty() {
                 "null".to_string()

@@ -35,8 +35,8 @@ var SdtChart = (function () {
     var lanes_data = cfg.lanes;
 
     // ── Selection state ───────────────────────────────────────────────
-    var selectedPopId = null;
-    var tracedPopIds = new Set();
+    var selectedSegmentId = null;
+    var tracedSegmentIds = new Set();
 
     // ── Color configuration ───────────────────────────────────────────
     var COLORS = {
@@ -97,50 +97,50 @@ var SdtChart = (function () {
 
     // ── Tracing functions ─────────────────────────────────────────────
 
-    function traceBackward(popId, visited) {
+    function traceBackward(segmentId, visited) {
       visited = visited || new Set();
-      if (visited.has(popId)) return visited;
-      visited.add(popId);
+      if (visited.has(segmentId)) return visited;
+      visited.add(segmentId);
 
       for (var i = 0; i < transfers_data.length; i++) {
-        if (transfers_data[i].dest_pop_id === popId) {
-          traceBackward(transfers_data[i].source_pop_id, visited);
+        if (transfers_data[i].dest_segment_id === segmentId) {
+          traceBackward(transfers_data[i].source_segment_id, visited);
         }
       }
       return visited;
     }
 
-    function traceForward(popId, visited) {
+    function traceForward(segmentId, visited) {
       visited = visited || new Set();
-      if (visited.has(popId)) return visited;
-      visited.add(popId);
+      if (visited.has(segmentId)) return visited;
+      visited.add(segmentId);
 
       for (var i = 0; i < transfers_data.length; i++) {
-        if (transfers_data[i].source_pop_id === popId) {
-          traceForward(transfers_data[i].dest_pop_id, visited);
+        if (transfers_data[i].source_segment_id === segmentId) {
+          traceForward(transfers_data[i].dest_segment_id, visited);
         }
       }
       return visited;
     }
 
-    function buildTraceSet(popId) {
-      var backward = traceBackward(popId);
-      var forward = traceForward(popId);
+    function buildTraceSet(segmentId) {
+      var backward = traceBackward(segmentId);
+      var forward = traceForward(segmentId);
 
       // Combine both sets, excluding the selected segment itself
       var combined = new Set();
-      backward.forEach(function (id) { if (id !== popId) combined.add(id); });
-      forward.forEach(function (id) { if (id !== popId) combined.add(id); });
+      backward.forEach(function (id) { if (id !== segmentId) combined.add(id); });
+      forward.forEach(function (id) { if (id !== segmentId) combined.add(id); });
 
       return combined;
     }
 
     // ── Color selection helper ────────────────────────────────────────
 
-    function getsegmentColors(popId) {
-      if (popId === selectedPopId) {
+    function getsegmentColors(segmentId) {
+      if (segmentId === selectedSegmentId) {
         return COLORS.selected;
-      } else if (tracedPopIds.has(popId)) {
+      } else if (tracedSegmentIds.has(segmentId)) {
         return COLORS.traced;
       } else {
         return COLORS.default;
@@ -149,15 +149,15 @@ var SdtChart = (function () {
 
     // ── Selection handlers ────────────────────────────────────────────
 
-    function selectsegment(popId) {
-      selectedPopId = popId;
-      tracedPopIds = buildTraceSet(popId);
+    function selectsegment(segmentId) {
+      selectedSegmentId = segmentId;
+      tracedSegmentIds = buildTraceSet(segmentId);
       rebuild();
     }
 
     function clearSelection() {
-      selectedPopId = null;
-      tracedPopIds.clear();
+      selectedSegmentId = null;
+      tracedSegmentIds.clear();
       rebuild();
     }
 
@@ -259,7 +259,7 @@ var SdtChart = (function () {
       var laneMap = {};
       for (var i = 0; i < lanes_data.length; i++) laneMap[lanes_data[i].container_id] = i;
 
-      var popPositions = {};
+      var segmentPositions = {};
       for (var i = 0; i < segments.length; i++) {
         var p = segments[i];
         var li = laneMap[p.container_id];
@@ -270,32 +270,32 @@ var SdtChart = (function () {
         var ry = marginTop + li * laneHeight + rectPadding;
         var h = laneHeight - 2 * rectPadding;
 
-        popPositions[p.pop_id] = { x: x, x2: x2, y: ry, h: h, lane: li };
+        segmentPositions[p.segment_id] = { x: x, x2: x2, y: ry, h: h, lane: li };
 
         // Get colors based on selection state
-        var colors = getsegmentColors(p.pop_id);
+        var colors = getsegmentColors(p.segment_id);
 
         var rect = svgEl('rect', {
           x: x, y: ry, width: w, height: h, rx: 3,
           fill: colors.fill,
           stroke: colors.stroke,
-          'stroke-width': p.pop_id === selectedPopId ? 2 : 1,
+          'stroke-width': p.segment_id === selectedSegmentId ? 2 : 1,
           cursor: 'pointer'
         });
 
-        var tip = p.pop_id + '\n' + formatTimestamp(p.start_us) + ' → ' + formatTimestamp(p.end_us);
+        var tip = p.segment_id + '\n' + formatTimestamp(p.start_us) + ' → ' + formatTimestamp(p.end_us);
         if (p.tooltip) tip += '\n' + p.tooltip;
         var title = svgEl('title', {});
         title.textContent = tip;
         rect.appendChild(title);
 
         // Add click handler for selection
-        (function (popId) {
+        (function (segmentId) {
           rect.addEventListener('click', function (e) {
             e.stopPropagation();
-            selectsegment(popId);
+            selectsegment(segmentId);
           });
-        })(p.pop_id);
+        })(p.segment_id);
 
         // Add hover effect
         rect.addEventListener('mouseenter', function () {
@@ -311,7 +311,7 @@ var SdtChart = (function () {
 
         if (p.label && w > 30) {
           var lbl = svgEl('text', {
-            x: x + 4, y: ry + h / 2 + 4, 'class': 'pop-label'
+            x: x + 4, y: ry + h / 2 + 4, 'class': 'segment-label'
           });
           lbl.textContent = p.label;
           svg.appendChild(lbl);
@@ -321,8 +321,8 @@ var SdtChart = (function () {
       // ── Transfer arrows ──
       for (var i = 0; i < transfers_data.length; i++) {
         var tr = transfers_data[i];
-        var src = popPositions[tr.source_pop_id];
-        var dst = popPositions[tr.dest_pop_id];
+        var src = segmentPositions[tr.source_segment_id];
+        var dst = segmentPositions[tr.dest_segment_id];
         if (!src || !dst) continue;
 
         var tx1 = marginLeft + timeToX(tr.transfer_time_us, false);
@@ -335,7 +335,7 @@ var SdtChart = (function () {
           stroke: '#e74c3c', 'stroke-width': 1.5,
           'marker-end': 'url(#arrowhead)', 'class': 'transfer-arrow'
         });
-        var tip = tr.source_pop_id + ' → ' + tr.dest_pop_id + '\n' + formatTimestamp(tr.transfer_time_us);
+        var tip = tr.source_segment_id + ' → ' + tr.dest_segment_id + '\n' + formatTimestamp(tr.transfer_time_us);
         if (tr.tooltip) tip += '\n' + tr.tooltip;
         var title = svgEl('title', {});
         title.textContent = tip;
@@ -360,8 +360,8 @@ var SdtChart = (function () {
 
     // ── Selection controls (exposed globally for notebook calls) ──────
 
-    window.sdtSelectsegment = function (popId) {
-      selectsegment(popId);
+    window.sdtSelectsegment = function (segmentId) {
+      selectsegment(segmentId);
     };
 
     window.sdtClearSelection = function () {

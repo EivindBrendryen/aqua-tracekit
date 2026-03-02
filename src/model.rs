@@ -58,7 +58,7 @@ impl SdtModel {
     ///
     /// Minimum required columns:
     /// segment columns (required)
-    ///     source_pop_id, dest_pop_id
+    ///     source_segment_id, dest_segment_id
     /// stock columns (required if factor columns are missing):
     ///     transfer_count, transfer_biomass_kg
     /// or factor columns (required if stock columna set missing):
@@ -72,7 +72,7 @@ impl SdtModel {
         let fname = filename.unwrap_or("transfers.csv");
         let raw = self.read_csv_as_strings(fname, None)?;
 
-        Self::require_columns(&raw, &[transfer::SOURCE_POP_ID, transfer::DEST_POP_ID])?;
+        Self::require_columns(&raw, &[transfer::SOURCE_SEGMENT_ID, transfer::DEST_SEGMENT_ID])?;
 
         let schema = raw.schema();
         let has_stock_cols = schema.contains(transfer::TRANSFER_COUNT)
@@ -139,19 +139,19 @@ impl SdtModel {
         let calc_forward_count = col(transfer::TRANSFER_COUNT)
             / col(transfer::TRANSFER_COUNT)
                 .sum()
-                .over([col(transfer::SOURCE_POP_ID)]);
+                .over([col(transfer::SOURCE_SEGMENT_ID)]);
         let calc_forward_biomass = col(transfer::TRANSFER_BIOMASS_KG)
             / col(transfer::TRANSFER_BIOMASS_KG)
                 .sum()
-                .over([col(transfer::SOURCE_POP_ID)]);
+                .over([col(transfer::SOURCE_SEGMENT_ID)]);
         let calc_backward_count = col(transfer::TRANSFER_COUNT)
             / col(transfer::TRANSFER_COUNT)
                 .sum()
-                .over([col(transfer::DEST_POP_ID)]);
+                .over([col(transfer::DEST_SEGMENT_ID)]);
         let calc_backward_biomass = col(transfer::TRANSFER_BIOMASS_KG)
             / col(transfer::TRANSFER_BIOMASS_KG)
                 .sum()
-                .over([col(transfer::DEST_POP_ID)]);
+                .over([col(transfer::DEST_SEGMENT_ID)]);
 
         // For each factor: use file value if present, otherwise calculate from stock
         lazy = lazy.with_columns([
@@ -338,13 +338,13 @@ impl SdtModel {
         let dt: NaiveDateTime = timestamp.extract()?;
         let timestamp_us = dt.and_utc().timestamp_micros();
 
-        let pops = self
+        let segments = self
             .segments
             .as_ref()
             .ok_or_else(|| SdtError::NotLoaded("segments".into()))
             .map_err(SdtError::from)?;
 
-        let df = pops
+        let df = segments
             .clone()
             .lazy()
             .filter(
@@ -361,7 +361,7 @@ impl SdtModel {
     }
 
     fn get_segments_incoming(&self) -> PyResult<PyDataFrame> {
-        let pops = self
+        let segments = self
             .segments
             .as_ref()
             .ok_or(SdtError::NotLoaded("segments".into()))
@@ -372,18 +372,18 @@ impl SdtModel {
             .ok_or(SdtError::NotLoaded("transfers".into()))
             .map_err(SdtError::from)?;
 
-        let dest_pops = transfers
-            .column(transfer::DEST_POP_ID)
+        let dest_segments = transfers
+            .column(transfer::DEST_SEGMENT_ID)
             .map_err(SdtError::from)?
             .as_materialized_series()
             .clone();
 
-        let df = pops
+        let df = segments
             .clone()
             .lazy()
             .filter(
                 col(segment::SEGMENT_ID)
-                    .is_in(lit(dest_pops), false)
+                    .is_in(lit(dest_segments), false)
                     .not(),
             )
             .collect()
@@ -393,7 +393,7 @@ impl SdtModel {
     }
 
     fn get_segments_outgoing(&self) -> PyResult<PyDataFrame> {
-        let pops = self
+        let segments = self
             .segments
             .as_ref()
             .ok_or(SdtError::NotLoaded("segments".into()))
@@ -404,18 +404,18 @@ impl SdtModel {
             .ok_or(SdtError::NotLoaded("transfers".into()))
             .map_err(SdtError::from)?;
 
-        let source_pops = transfers
-            .column(transfer::SOURCE_POP_ID)
+        let source_segments = transfers
+            .column(transfer::SOURCE_SEGMENT_ID)
             .map_err(SdtError::from)?
             .as_materialized_series()
             .clone();
 
-        let df = pops
+        let df = segments
             .clone()
             .lazy()
             .filter(
                 col(segment::SEGMENT_ID)
-                    .is_in(lit(source_pops), false)
+                    .is_in(lit(source_segments), false)
                     .not(),
             )
             .collect()
@@ -429,14 +429,14 @@ impl SdtModel {
     /// Merge traced segment data with time-series or other segment-level data.
     #[staticmethod]
     fn add_data_to_trace(
-        pop_data: PyDataFrame,
+        segment_data: PyDataFrame,
         traceability_index: PyDataFrame,
     ) -> PyResult<PyDataFrame> {
         let df = traceability_index
             .0
             .lazy()
             .join(
-                pop_data.0.lazy(),
+                segment_data.0.lazy(),
                 [col(traceability::TRACED_SEGMENT_ID)],
                 [col(segment::SEGMENT_ID)],
                 JoinArgs::new(JoinType::Left),
@@ -463,7 +463,7 @@ impl SdtModel {
         include_unmatched: bool,
         allow_multiple: bool,
     ) -> PyResult<PyDataFrame> {
-        let pops = self
+        let segments = self
             .segments
             .as_ref()
             .ok_or(SdtError::NotLoaded("segments".into()))
@@ -490,7 +490,7 @@ impl SdtModel {
             .0
             .lazy()
             .join(
-                pops.clone().lazy(),
+                segments.clone().lazy(),
                 [col(container::CONTAINER_ID)],
                 [col(segment::CONTAINER_ID)],
                 JoinArgs::new(join_type),

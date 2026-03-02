@@ -1,6 +1,6 @@
 # aqua-tracekit
 
-Lightweight toolkit for basic analysis of aquaculture data in Jupyter notebooks, built around the **SalmoDuck traceability model**.
+Lightweight toolkit for basic analysis of aquaculture data in Jupyter notebooks, built around the **[SalmoDuck traceability model](docs/SALMODUCK_TRACEABILITY_MODEL.md)**. 
 
 **Source, examples & discussions:** [github.com/EivindBrendryen/aqua-tracekit](https://github.com/EivindBrendryen/aqua-tracekit)
 
@@ -93,6 +93,10 @@ Jupyter notebooks covering common scenarios:
 | [Aggregations](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_4_aggregations/example_4_aggregations.ipynb) | Statistics grouped by origin, time, or custom dimensions |
 | [Forward tracing](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_6_trace_forward/example_6_trace_forward.ipynb) | Trace forward to see where fish end up |
 | [Trace from middle](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_20_trace_middle/example_20_trace_middle.ipynb) | Trace both directions from a mid-chain segment |
+
+## Documentation
+
+- [SalmoDuck Traceability Model](docs/SALMODUCK_TRACEABILITY_MODEL.md)
 
 ## License
 

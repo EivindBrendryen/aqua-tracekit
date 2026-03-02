@@ -3,8 +3,8 @@
 
 // ── Transfer columns ────────────────────────────────────────────────────────
 pub mod transfer {
-    pub const SOURCE_POP_ID: &str = "source_pop_id";
-    pub const DEST_POP_ID: &str = "dest_pop_id";
+    pub const SOURCE_SEGMENT_ID: &str = "source_segment_id";
+    pub const DEST_SEGMENT_ID: &str = "dest_segment_id";
     pub const TRANSFER_COUNT: &str = "transfer_count";
     pub const TRANSFER_BIOMASS_KG: &str = "transfer_biomass_kg";
 }

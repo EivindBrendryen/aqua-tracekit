@@ -26,10 +26,10 @@ pub struct DagTracer {
 impl DagTracer {
     /// Build the graph from a transfers DataFrame.
     ///
-    /// Required columns: source_pop, dest_pop, and the four factor columns.
+    /// Required columns: source_segment, dest_segment, and the four factor columns.
     pub fn from_transfers(df: &DataFrame) -> Result<Self, SdtError> {
-        let source = df.column(transfer::SOURCE_POP_ID)?.str()?;
-        let dest = df.column(transfer::DEST_POP_ID)?.str()?;
+        let source = df.column(transfer::SOURCE_SEGMENT_ID)?.str()?;
+        let dest = df.column(transfer::DEST_SEGMENT_ID)?.str()?;
 
         let factor_series: Vec<&ChunkedArray<Float64Type>> = factors::ALL
             .iter()
@@ -49,10 +49,10 @@ impl DagTracer {
 
         for i in 0..df.height() {
             let src = source.get(i).ok_or_else(|| {
-                SdtError::General(format!("Null source_pop at row {i}"))
+                SdtError::General(format!("Null source_segment at row {i}"))
             })?;
             let dst = dest.get(i).ok_or_else(|| {
-                SdtError::General(format!("Null dest_pop at row {i}"))
+                SdtError::General(format!("Null dest_segment at row {i}"))
             })?;
 
             let mut values = [0.0f64; 4];

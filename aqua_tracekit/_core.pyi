@@ -36,7 +36,7 @@ class SdtModel:
     def load_transfers(self, filename: Optional[str] = None) -> pl.DataFrame:
         """Load transfers CSV.
         
-        Required columns: source_pop_id, dest_pop_id
+        Required columns: source_segment_id, dest_segment_id
         Plus either stock columns (transfer_count, transfer_biomass_kg)
         or factor columns (share_count_forward, share_biomass_forward, 
                           share_count_backward, share_biomass_backward)
@@ -194,13 +194,13 @@ class SdtModel:
     
     @staticmethod
     def add_data_to_trace(
-        pop_data: pl.DataFrame,
+        segment_data: pl.DataFrame,
         traceability_index: pl.DataFrame,
     ) -> pl.DataFrame:
         """Merge traced segment data with time-series or other segment-level data.
         
         Args:
-            pop_data: DataFrame with segment data
+            segment_data: DataFrame with segment data
             traceability_index: Traceability index DataFrame
             
         Returns:
@@ -482,8 +482,8 @@ class Aggregation:
 
 class transfer:
     """Transfer column name constants."""
-    SOURCE_POP_ID: str
-    DEST_POP_ID: str
+    SOURCE_SEGMENT_ID: str
+    DEST_SEGMENT_ID: str
     TRANSFER_COUNT: str
     TRANSFER_BIOMASS_KG: str
 
