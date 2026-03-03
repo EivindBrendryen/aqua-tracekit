@@ -83,16 +83,7 @@ The process lends itself to easy data processing, filtering, aggregations and mo
 
 ## Examples
 
-Jupyter notebooks covering common scenarios:
-
-| Example | Description |
-|---------|-------------|
-| [Basics](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_1_basics/example_1_basics.ipynb) | Core data model, loading data, basic operations |
-| [Split transfers](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_2_split/example_2_split.ipynb) | One segment split across multiple destinations |
-| [Mix transfers](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_3_mix/example_3_mix.ipynb) | Multiple sources mixed into one container |
-| [Aggregations](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_4_aggregations/example_4_aggregations.ipynb) | Statistics grouped by origin, time, or custom dimensions |
-| [Forward tracing](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_6_trace_forward/example_6_trace_forward.ipynb) | Trace forward to see where fish end up |
-| [Trace from middle](https://nbviewer.org/github/EivindBrendryen/aqua-tracekit/blob/main/examples/example_20_trace_middle/example_20_trace_middle.ipynb) | Trace both directions from a mid-chain segment |
+See [examples/README.md](examples/README.md) for the canonical learning path, local run instructions, and notebook links.
 
 ## Documentation
 
