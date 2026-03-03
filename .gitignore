@@ -21,6 +21,7 @@ wheels/
 .idea/
 *.swp
 *.swo
+*.pdb
 
 # Rust
 target/
