@@ -1,12 +1,31 @@
 # aqua-tracekit
 
-Lightweight toolkit for basic analysis of aquaculture data in Jupyter notebooks, built around the **[SalmoDuck traceability model](docs/SALMODUCK_TRACEABILITY_MODEL.md)**. 
+Lightweight toolkit for basic analysis of aquaculture data in Jupyter notebooks, built on the **[SalmoDuck traceability model](docs/SALMODUCK_TRACEABILITY_MODEL.md)**.
 
-**Source, examples & discussions:** [github.com/EivindBrendryen/aqua-tracekit](https://github.com/EivindBrendryen/aqua-tracekit)
+**Background**
+Most companies and software systems in the aquaculture industry today are using the same principles for traceability modelling and methods for data analysis in a traceability context. Also in the research and education space, the same principles are well known. 
+
+Outside special-purpose systems however, it is often challenging to apply these principles in practice, as the transformation from graphs to tabular data depends on the actual use-case and is often beyond basic data manipulation tools and skills.
+
+`aqua-tracekit` cuts through the complexity of fish movement across containers (cages, tanks, wellboats, etc.) and allows for custom numerical analysis in a user-friendly fashion.
+
+**Research**
+Challenges and solutions related to traceability, fish group identification and more are discussed in the work published by [David Weman Persson (NMBU)](https://www.nmbu.no/en/about/employees/david-weman-persson):
+
+```Article is not (yet) publicly available.```
+
+The research context is the NFR project grant [336354](https://prosjektbanken.forskningsradet.no/project/FORISS/336354?Kilde=FORISS&distribution=Ar&chart=bar&calcType=funding&Sprak=no&sortBy=score&sortOrder=desc&resultCount=30&offset=0&Fritekst=336354):
+
+```Causal categorisation of mortality as a model system for sustainable growth and increased value creation in aquaculture```
+
+The project, led by [Marit Stormoen (NMBU)](https://www.nmbu.no/en/about/employees/marit-stormoen), is still ongoing.
+
 
 ---
 
-`aqua-tracekit` cuts through the complexity of fish movement across containers (cages, tanks, wellboats, etc.) when performing numerical analysis.
+**Source, examples & discussions:** [github.com/EivindBrendryen/aqua-tracekit](https://github.com/EivindBrendryen/aqua-tracekit)
+
+
  
 The goal is to provide a practical tool as well as contributing to a conceptual baseline for modelling traceability data within aquaculture production.
 
@@ -54,7 +73,7 @@ Dimensional data can be freely attached to these entities, and they will follow 
 - segments: fish_group_name, global_gap_number, species, generation
 - transfers: type_of_transfer, transfer_operation_id
 
-Adding refences (id's) is the preferred way to relate to larger structures. This increases performance.
+Adding references (id's) is the preferred way to relate to larger structures. This increases performance.
 
 Fact data is modelled as timeseries data (even if the fact is just a single record, like a vaccination). All operations on facts is done using the time series support in the toolkit.
 
